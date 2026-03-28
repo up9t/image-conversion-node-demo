@@ -2,29 +2,56 @@ import express from "express";
 import pino from "pino";
 import { pinoHttp } from "pino-http";
 import sharp from "sharp";
-import multer, { diskStorage} from "multer";
-import { readFile, unlink } from "node:fs/promises";
+import multer, { diskStorage } from "multer";
+import { readFile, unlink, stat, mkdir } from "node:fs/promises";
 import { StatusCodes } from "http-status-codes";
 
+const uploadDir = "./uploads";
+
+function isSystemError(e: any): e is NodeJS.ErrnoException {
+  return e instanceof Error && "code" in e;
+}
+
+const logger = pino(
+  process.stdout.isTTY
+    ? { transport: { target: 'pino-pretty' } }
+    : {}
+);
+
+async function createDirectoryIfNotExists(dir: string) {
+  const stats = await stat(dir).catch((err) => {
+    return err as Error;
+  });
+
+  if (isSystemError(stats) && stats.code === "ENOENT") {
+    await mkdir(dir).catch((err) => {
+      if (err) {
+        logger.info({ error: err }, "failed to create upload directory");
+
+        process.exit(1)
+      }
+    });
+  }
+}
+
+await createDirectoryIfNotExists(uploadDir);
+
 const upload = multer({
-  storage: diskStorage({ 
-    destination() {
-      return "./uploads"
+  storage: diskStorage({
+    destination(req, file, callback) {
+      callback(null, uploadDir)
     },
     filename(req, file, callback) {
       const prefix = Date.now().toString();
-      callback(null,  prefix + file.originalname.slice(-50))
+      callback(null, prefix + "-" + file.originalname.slice(-50))
     },
   }),
   limits: {
     fieldSize: 10 << 20, // 10 MB
   }
-})
+});
 
 const app = express()
-const logger = pino({
-  // formatters
-});
 const httpLogger = pinoHttp({ logger });
 
 app.use(httpLogger)
@@ -34,7 +61,7 @@ app.get("/", function (req, res) {
   res.send("use /convert to start converting images\n")
 })
 
-app.get("/convert", upload.single("image"), async function (req, res) {
+app.post("/convert", upload.single("image"), async function (req, res) {
   req.log.info("converting image")
 
   const filePath = req.file?.path
@@ -87,8 +114,32 @@ app.get("/convert", upload.single("image"), async function (req, res) {
   transformer.pipe(res);
 
   return
-})
+});
 
-app.listen(8080, () => {
+const server = app.listen(8080, (err) => {
+  if (err) {
+    logger.info({
+      error: err,
+    }, "failed to start server");
+
+    return
+  }
+
   logger.info("Server listening on port: " + 8080);
+});
+
+process.on("SIGINT", () => {
+  logger.info("SIGINT signal received, performing graceful shutdown");
+
+  server.close(() => {
+    logger.info("Server closed");
+  });
+});
+
+process.on("uncaughtException", (err) => {
+  logger.error({ error: err }, "uncaught exception");
+});
+
+process.on("unhandledRejection", (err, promise) => {
+  logger.error({ error: err, promise }, "unhandled rejection");
 });
