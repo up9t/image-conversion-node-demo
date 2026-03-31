@@ -1,11 +1,21 @@
-```bash
-npm add express pino pino-http sharp
-npm add --save-dev typescript @types/node @types/express @types/multer
-# Install vips
+# Image Convertion API with Nodejs Demo
 
-# Install node-addon
-npm add node-addon-api node-gyp
+1. Install Vips
 
-# Rebuild sharp
-npm explore sharp -- npm run build
-```
+2. Install sharp
+
+    ```bash
+    npm add sharp
+    ```
+
+3. Install node-addon
+
+    ```bash
+    npm add node-addon-api node-gyp
+    ```
+
+4. Rebuild sharp
+
+    ```bash
+    npm explore sharp -- npm run build
+    ```
