@@ -5,13 +5,17 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node .",
-    "dev": "NODE_ENV=dev tsx src/",
-    "test": "node --test test/*"
+    "dev": "tsx --env-file=.env src/",
+    "test": "node --test test/*.ts",
+    "build": "tsc",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "express": "^5.2.1",
     "http-status-codes": "^2.3.0",
     "multer": "^2.1.1",
+    "node-addon-api": "^8.7.0",
+    "node-gyp": "^12.2.0",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
     "sharp": "^0.34.5"

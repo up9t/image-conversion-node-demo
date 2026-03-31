@@ -8,6 +8,12 @@
 <body>
   <form action="http://localhost:8080/convert" method="post" enctype="multipart/form-data">
     <input type="file" name="image" id="">
+    <input type="text" name="format" id="" list="formats">
+    <datalist id="formats">
+      <option value="png">PNG</option>
+      <option value="jpeg">JPEG</option>
+      <option value="webp">WEBP</option>
+    </datalist>
     <input type="submit" value="submit">
   </form>
 </body>
