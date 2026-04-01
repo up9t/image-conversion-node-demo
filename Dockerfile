@@ -33,7 +33,7 @@ RUN git clone --branch=${MESON_VERSION} --depth=1 https://github.com/mesonbuild/
 # Install node modules and build
 FROM base AS builder
 WORKDIR /app
-COPY ./package*.json .
+COPY ./package.json ./package-lock.json .
 RUN npm ci
 COPY . .
 # Rebuild sharp
