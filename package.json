@@ -7,6 +7,7 @@
     "start": "node .",
     "dev": "tsx --env-file=.env src/",
     "test": "node --test test/*.ts",
+    "format": "biome check --write",
     "build": "tsc",
     "prepare": "npm run build"
   },
@@ -21,6 +22,7 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.10",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.5.0",
