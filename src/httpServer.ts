@@ -32,6 +32,8 @@ app.get("/", (_req, res) => {
 });
 
 app.post("/convert", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   const err = await new Promise<Error | null>((resolve, reject) => {
     fileStore.single("image")(req, res, (err) => {
       if (err) {
@@ -41,10 +43,28 @@ app.post("/convert", async (req, res) => {
     });
   });
 
+  const filePath = req.file?.path;
+
+  res.on("close", async () => {
+    if (filePath) {
+      await unlink(filePath).catch((err) => {
+        req.log.error({ error: err }, `failed to clean up image: ${filePath}`);
+      });
+    }
+  });
+
   if (err) {
     res.status(StatusCodes.BAD_REQUEST).json({
       message: "failed to upload file",
       error: err,
+    });
+
+    return;
+  }
+
+  if (!filePath) {
+    res.status(StatusCodes.BAD_REQUEST).json({
+      failed: "file path not found",
     });
 
     return;
@@ -69,24 +89,6 @@ app.post("/convert", async (req, res) => {
 
     return;
   }
-
-  const filePath = req.file?.path;
-
-  if (!filePath) {
-    res.status(StatusCodes.BAD_REQUEST).json({
-      failed: "file path not found",
-    });
-
-    return;
-  }
-
-  res.on("close", async () => {
-    if (filePath) {
-      await unlink(filePath).catch((err) => {
-        req.log.error({ error: err }, `failed to clean up image: ${filePath}`);
-      });
-    }
-  });
 
   const content = await readFile(filePath).catch((err) => {
     req.log.error({ error: err }, `failed to read image: ${filePath}`);

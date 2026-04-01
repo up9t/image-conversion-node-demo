@@ -8,8 +8,7 @@
     "dev": "tsx --env-file=.env src/",
     "test": "node --test test/*.ts",
     "format": "biome check --write",
-    "build": "tsc",
-    "prepare": "npm run build"
+    "build": "tsc"
   },
   "dependencies": {
     "express": "^5.2.1",

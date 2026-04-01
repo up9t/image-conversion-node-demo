@@ -46,17 +46,22 @@ if (err) {
 const host = config.host;
 const port = config.port;
 
-const server = createServer(app).listen(port, host, () => {
+const server = createServer(app);
+
+server.listen(port, host, () => {
   logger.info(`Server listening on: ${host}:${port}`);
 });
 
-process.on("SIGINT", () => {
+const shutdown = () => {
   logger.info("SIGINT signal received, performing graceful shutdown.");
 
   server.close(() => {
     logger.info("Server closed.");
   });
-});
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
 process.on("uncaughtException", (err) => {
   logger.error({ error: err }, "uncaught exception");
