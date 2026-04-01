@@ -1,0 +1,12 @@
+.devcontainer/
+.vscode/
+dist/
+fixtures/
+frontend/
+node_modules/
+test/
+uploads/
+.env*
+.gitignore
+biome.json
+README.md
