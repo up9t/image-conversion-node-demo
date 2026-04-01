@@ -10,20 +10,19 @@ function isSystemError(e: unknown): e is NodeJS.ErrnoException {
 
 async function createDirectoryIfNotExists(dir: string) {
   const stats = await stat(dir).catch((err) => {
-   return err as Error;
+    return err as Error;
   });
 
   if (isSystemError(stats) && stats.code === "ENOENT") {
-    const res = await mkdir(dir, { recursive: true })
-      .catch((err) => {
-        return err as Error;
-      });
+    const res = await mkdir(dir, { recursive: true }).catch((err) => {
+      return err as Error;
+    });
 
     if (res instanceof Error) {
       return res;
     }
 
-    return
+    return;
   }
 
   if (stats instanceof Error) {

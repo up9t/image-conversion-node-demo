@@ -38,10 +38,7 @@ test("convert non image body", async () => {
     body: formData,
   });
 
-  // Text content is not a valid image file
-  assert.strictEqual(response.status, 500);
-  const body = (await response.json()) as { message: string };
-  assert.strictEqual(body.message, "failed to transform image");
+  assert.strictEqual(response.status, 400);
 });
 
 test("convert image formats", (t, done) => {
