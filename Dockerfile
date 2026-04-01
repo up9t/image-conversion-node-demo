@@ -8,7 +8,7 @@ ARG LIBVIPS_VERSION=v8.18.1
 
 
 # Install meson and ninja
-FROM debian-base AS install-tool
+FROM debian-base AS install-tools
 ARG NINJA_VERSION
 ARG MESON_VERSION
 WORKDIR /build
@@ -35,10 +35,10 @@ FROM base AS builder
 WORKDIR /app
 COPY ./package.json ./package-lock.json .
 RUN npm ci
+# Rebuild sharp if necessary, the doc says it automatically detects the vips global installation
+# RUN npm explore sharp -- npm run build
 COPY . .
-# Rebuild sharp
-RUN npm explore sharp -- npm run build
-# Remove line below if you don't need npm run build for your project
+# Remove/comment the line below if you don't need npm run build for your project
 RUN npm run build
 
 
@@ -59,11 +59,11 @@ WORKDIR /libvips
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3 build-essential pkg-config libglib2.0-dev libexpat1-dev libheif-dev \
-    liblcms2-dev libjpeg-dev libpng-dev libwebp-dev libexif-dev \
-    libde265-dev libx265-dev
-# Copy build tools from install-tool stage
-COPY --from=install-tool /usr/local/bin/ninja /usr/local/bin/ninja
-COPY --from=install-tool /usr/local/bin/meson /usr/local/bin/meson
+    liblcms2-dev libjpeg-dev libpng-dev libwebp-dev libexif-dev
+    # libde265-dev libx265-dev
+# Copy build tools from the install-tools stage
+COPY --from=install-tools /usr/local/bin/ninja /usr/local/bin/ninja
+COPY --from=install-tools /usr/local/bin/meson /usr/local/bin/meson
 COPY --from=download-vips /downloads/libvips .
 # Build libvips
 RUN meson setup build --prefix /usr/local && \
