@@ -31,7 +31,25 @@ app.get("/", (_req, res) => {
   res.status(StatusCodes.OK).send("use /convert to start converting images.\n");
 });
 
-app.post("/convert", fileStore.single("image"), async (req, res) => {
+app.post("/convert", async (req, res) => {
+  const err = await new Promise<Error | null>((resolve, reject) => {
+    fileStore.single("image")(req, res, (err) => {
+      if (err) {
+        return reject(err as Error);
+      }
+      resolve(null);
+    });
+  });
+
+  if (err) {
+    res.status(StatusCodes.BAD_REQUEST).json({
+      message: "failed to upload file",
+      error: err,
+    });
+
+    return;
+  }
+
   const formatToMimeType = {
     webp: "image/webp",
     jpeg: "image/jpeg",
@@ -41,7 +59,7 @@ app.post("/convert", fileStore.single("image"), async (req, res) => {
 
   const FALLBACK_FORMAT = "webp";
   const format =
-    (req.body.format as keyof typeof formatToMimeType) || FALLBACK_FORMAT;
+    (req.body?.format as keyof typeof formatToMimeType) || FALLBACK_FORMAT;
 
   if (!Object.hasOwn(formatToMimeType, format)) {
     res.status(StatusCodes.BAD_REQUEST).json({
