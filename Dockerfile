@@ -1,11 +1,10 @@
+ARG NINJA_VERSION=v1.13.2
+ARG MESON_VERSION=1.10.2
+ARG LIBVIPS_VERSION=v8.18.2
+
 FROM node:25-trixie AS base
 FROM node:25-trixie-slim AS base-slim
 FROM debian:trixie AS debian-base
-
-ARG NINJA_VERSION=v1.13.2
-ARG MESON_VERSION=1.10.2
-ARG LIBVIPS_VERSION=v8.18.1
-
 
 # Install meson and ninja
 FROM debian-base AS install-tools
@@ -30,18 +29,6 @@ RUN git clone --branch=${MESON_VERSION} --depth=1 https://github.com/mesonbuild/
     mv meson.pyz /usr/local/bin/meson
 
 
-# Install node modules and build
-FROM base AS builder
-WORKDIR /app
-COPY ./package.json ./package-lock.json .
-RUN npm ci
-# Rebuild sharp if necessary, the doc says it automatically detects the vips global installation
-# RUN npm explore sharp -- npm run build
-COPY . .
-# Remove/comment the line below if you don't need npm run build for your project
-RUN npm run build
-
-
 # Download libvips
 FROM base AS download-vips
 ARG LIBVIPS_VERSION
@@ -59,14 +46,13 @@ WORKDIR /libvips
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3 build-essential pkg-config libglib2.0-dev libexpat1-dev libheif-dev \
-    liblcms2-dev libjpeg-dev libpng-dev libwebp-dev libexif-dev
-    # libde265-dev libx265-dev
+    liblcms2-dev libjpeg-dev libpng-dev libwebp-dev libexif-dev libde265-dev libx265-dev
 # Copy build tools from the install-tools stage
 COPY --from=install-tools /usr/local/bin/ninja /usr/local/bin/ninja
 COPY --from=install-tools /usr/local/bin/meson /usr/local/bin/meson
 COPY --from=download-vips /downloads/libvips .
 # Build libvips
-RUN meson setup build --prefix /usr/local && \
+RUN meson setup build --prefix /usr/local -Dmagick=disabled && \
     cd build && \
     meson compile && \
     meson test && \
@@ -74,17 +60,36 @@ RUN meson setup build --prefix /usr/local && \
     ldconfig
 
 
+# Install node modules and build
+FROM base AS builder
+WORKDIR /app
+COPY --from=build-vips /usr/local /usr/local
+RUN ldconfig
+COPY ./package.json ./package-lock.json .
+RUN npm ci
+# Rebuild sharp if necessary, the doc says it automatically detects the vips global installation
+RUN npm explore sharp -- npm run build
+COPY . .
+# Remove/comment the line below if you don't need npm run build for your project
+RUN npm run build
+
+
 # Run
 FROM base-slim AS runner
+ARG USERNAME=node
 WORKDIR /app
 # Install runtime dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libglib2.0-0 libexpat1 libheif1 liblcms2-2 libjpeg62-turbo \
-    libpng16-16 libwebp7 libexif12
+    libpng16-16 libwebp7 libexif12 libde265-0 libx265-215 \
+    libfftw3-double3 libwebpmux3 libwebpdemux2 libpangocairo-1.0-0 libpango-1.0-0 \
+    libcairo2 libpangoft2-1.0-0 libfontconfig1 libtiff6 librsvg2-2 libopenexr-3-1-30 libopenjp2-7 && \
+    rm -rf /var/lib/apt/lists/*
 COPY --from=build-vips /usr/local /usr/local
 RUN ldconfig
+RUN chown ${USERNAME}:${USERNAME} /app
 COPY --from=builder /app .
-USER node
+USER ${USERNAME}
 ENTRYPOINT ["npm"]
 CMD ["start"]

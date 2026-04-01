@@ -10,3 +10,4 @@ uploads/
 .gitignore
 biome.json
 README.md
+Dockerfile
