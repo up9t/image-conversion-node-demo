@@ -38,7 +38,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'image.' + formData.get('format');
+      a.download = `image.${formData.get('format')}`;
       a.click();
     });
   });

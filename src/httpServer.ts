@@ -116,11 +116,6 @@ app.post("/convert", async (req, res) => {
 
   transformer.on("error", (err) => {
     req.log.error({ error: err }, "failed to transform image");
-
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "failed to transform image",
-      reason: err,
-    });
   });
 
   transformer.pipe(res);

@@ -58,7 +58,7 @@ const shutdown = () => {
   server.close(() => {
     logger.info("Server closed.");
   });
-}
+};
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
