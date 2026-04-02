@@ -55,14 +55,13 @@ RUN meson setup build --prefix /usr/local -Dmagick=disabled && \
     cd build && \
     meson compile && \
     meson test && \
-    meson install && \
-    ldconfig
+    DESTDIR=/opt/vips meson install
 
 
 # Install node modules and build
 FROM base AS builder
 WORKDIR /app
-COPY --from=build-vips /usr/local /usr/local
+COPY --from=build-vips /opt/vips/usr/local /usr/local
 RUN ldconfig
 COPY ./package.json ./package-lock.json .
 RUN npm ci
@@ -85,10 +84,13 @@ RUN apt-get update && \
     libfftw3-double3 libwebpmux3 libwebpdemux2 libpangocairo-1.0-0 libpango-1.0-0 \
     libcairo2 libpangoft2-1.0-0 libfontconfig1 libtiff6 librsvg2-2 libopenexr-3-1-30 libopenjp2-7 && \
     rm -rf /var/lib/apt/lists/*
-COPY --from=build-vips /usr/local /usr/local
+COPY --from=build-vips /opt/vips/usr/local /usr/local
 RUN ldconfig
 RUN chown ${USERNAME}:${USERNAME} /app
-COPY --from=builder /app .
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY --from=builder /app/node_modules/sharp ./node_modules/sharp
+COPY --from=builder /app/dist ./dist
 USER ${USERNAME}
 ENTRYPOINT ["npm"]
 CMD ["start"]
