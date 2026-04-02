@@ -53,7 +53,7 @@ server.listen(port, host, () => {
 });
 
 const shutdown = () => {
-  logger.info("SIGINT signal received, performing graceful shutdown.");
+  logger.info("Signal received, performing graceful shutdown.");
 
   server.close(() => {
     logger.info("Server closed.");
