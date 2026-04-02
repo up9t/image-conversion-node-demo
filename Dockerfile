@@ -13,8 +13,7 @@ ARG MESON_VERSION
 WORKDIR /build
 # Install dependencies
 RUN apt-get update && \
-    apt-get install -y curl python3 git build-essential pkg-config && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y curl python3 git build-essential pkg-config
 # Install ninja
 RUN git clone --branch=${NINJA_VERSION} --depth=1 https://github.com/ninja-build/ninja.git && \
     cd ninja && \
